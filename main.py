@@ -1,6 +1,7 @@
 from tkinter import *   # Import tkinter library
 from tkinter import ttk
 
+from PIL.ImageOps import expand
 from setuptools.windows_support import windows_only
 from ttkthemes import ThemedTk
 from tkinter import filedialog
@@ -24,6 +25,8 @@ class Player:
         self.img_pause = PhotoImage(file="assets/pause.png")
         self.img_previus = PhotoImage(file="assets/previus.png")
         self.img_next = PhotoImage(file="assets/next.png")
+
+        self.status = 0
 
         self.local = ""
 
@@ -52,7 +55,7 @@ class Player:
         self.next = ttk.Button(self.frame2, image=self.img_next, command=self.next_music)
         self.next.grid(row=0, column=3)
 
-        self.volume = ttk.Scale(self.window)
+        self.volume = ttk.Scale(self.window, from_=0, to=1, command=self.volume_set, orient=HORIZONTAL)
         self.volume.pack(fill=X, padx=10)
 
         self.window.mainloop()
@@ -69,24 +72,39 @@ class Player:
         self.list.delete(ANCHOR)
 
     def next_music(self):
-        index = self.list.curselection()[0] + 1
-        self.list.selection_clear(0, END)
-        self.list.activate(index)
-        self.list.selection_set(index)
-        self.list.yview(index)
+        try:
+            index = self.list.curselection()[0] + 1
+            self.list.selection_clear(0, END)
+            self.list.activate(index)
+            self.list.selection_set(index)
+            self.list.yview(index)
+        except:
+            self.erro_window("Not music after")
 
 
     def previus_music(self):
-        index = self.list.curselection()[0] -1
-        self.list.selection_clear(0, END)
-        self.list.activate(index)
-        self.list.selection_set(index)
-        self.list.yview(index)
+        try:
+            index = self.list.curselection()[0] -1
+            self.list.selection_clear(0, END)
+            self.list.activate(index)
+            self.list.selection_set(index)
+            self.list.yview(index)
+        except:
+            self.erro_window("Not music before")
 
     def play_music(self):
-        #pygame.mixer.music.load(str(self.local) + "/" + str(self.list.get(ANCHOR)))
-        #pygame.mixer.music.play()
-        self.erro_window("tudo certo")
+        try:
+            if self.status == 0:
+                pygame.mixer.music.load(str(self.local) + "/" + str(self.list.get(ANCHOR)))
+                pygame.mixer.music.play()
+                self.play.config(image=self.img_pause)
+                self.status = 1
+            else:
+                pygame.mixer.music.pause()
+                self.play.config(image=self.img_play)
+                self.status = 0
+        except:
+            self.erro_window("Not music selected")
 
     def erro_window(self, message):
         window = Toplevel()
@@ -96,10 +114,14 @@ class Player:
         window.config(bg="#444444")
 
         text = ttk.Label(window, text=str(message))
-        text.pack()
+        text.pack(expand=YES)
 
         btn = ttk.Button(window, text="OK", command=window.destroy)
         btn.pack()
+
+    def volume_set(self, var):
+        pygame.mixer.music.set_volume(self.volume.get())
+
 
 
 
